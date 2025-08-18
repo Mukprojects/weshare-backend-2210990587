@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeTransfer-like File Sharing Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="file"], input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+            border-left: 4px solid #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 WeTransfer-like File Sharing Test</h1>
+        
+        <div class="info">
+            <strong>📋 Instructions:</strong><br>
+            1. Select any file from your computer<br>
+            2. Enter email addresses (optional)<br>
+            3. Click "Upload File"<br>
+            4. You'll get a download link to share!
+        </div>
+
+        <form action="http://localhost:3000/api/files/upload" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">📎 Select File to Share:</label>
+                <input type="file" id="file" name="file" required>
+            </div>
+
+            <div class="form-group">
+                <label for="senderEmail">📧 Your Email (optional):</label>
+                <input type="email" id="senderEmail" name="senderEmail" placeholder="your-email@example.com">
+            </div>
+
+            <div class="form-group">
+                <label for="receiverEmail">📨 Send to Email (optional):</label>
+                <input type="email" id="receiverEmail" name="receiverEmail" placeholder="friend@example.com">
+            </div>
+
+            <button type="submit">🚀 Upload & Share File</button>
+        </form>
+
+        <div class="info" style="margin-top: 30px;">
+            <strong>🔍 What happens next:</strong><br>
+            • Your file gets uploaded securely<br>
+            • You get a unique download link<br>
+            • If you entered an email, they get notified<br>
+            • File expires automatically in 24 hours<br>
+            • Download count is tracked
+        </div>
+    </div>
+</body>
+</html>

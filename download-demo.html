@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Shared File</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        .file-info {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #007bff;
+        }
+        .download-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+        }
+        .expiry-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 5px solid #ffc107;
+        }
+        .input-group {
+            display: flex;
+            margin: 20px 0;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px 0 0 5px;
+            font-size: 16px;
+        }
+        .input-group button {
+            padding: 12px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 5px solid #dc3545;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 5px solid #28a745;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .countdown {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 Download Shared File</h1>
+        
+        <div class="file-info">
+            <strong>🔍 Enter the file UUID or paste the full download link:</strong>
+            <div class="input-group">
+                <input type="text" id="fileInput" placeholder="Paste download link or enter UUID here...">
+                <button onclick="loadFileInfo()">🔍 Load</button>
+            </div>
+            <small style="color: #666;">
+                Example: http://localhost:3000/api/files/download/abc123-def456<br>
+                Or just: abc123-def456
+            </small>
+        </div>
+
+        <div id="loadingDiv" class="loading" style="display: none;">
+            <p>🔄 Loading file information...</p>
+        </div>
+
+        <div id="fileInfoDiv" style="display: none;">
+            <div class="file-info">
+                <h3>📄 File Information</h3>
+                <div id="fileDetails"></div>
+            </div>
+            
+            <div id="expiryWarning" class="expiry-warning">
+                <strong>⏰ Expiry:</strong> <span id="expiryTime"></span><br>
+                <strong>⏳ Time remaining:</strong> <span id="countdown" class="countdown"></span>
+            </div>
+            
+            <button id="downloadBtn" class="download-btn" onclick="downloadFile()">
+                📥 Download File
+            </button>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <small style="color: #666;">
+                    This file will be automatically deleted after expiry.<br>
+                    Download count: <span id="downloadCount">0</span>
+                </small>
+            </div>
+        </div>
+
+        <div id="errorDiv" class="error" style="display: none;">
+            <strong>❌ Error:</strong> <span id="errorMessage"></span>
+        </div>
+
+        <div id="successDiv" class="success" style="display: none;">
+            <strong>✅ Success:</strong> <span id="successMessage"></span>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #eee;">
+            <h3>💡 How to Use Shared Links</h3>
+            <div style="background: #e3f2fd; padding: 20px; border-radius: 8px;">
+                <strong>For File Senders:</strong><br>
+                • Upload files using the main upload page<br>
+                • Copy the download link<br>
+                • Share via WhatsApp, email, SMS, etc.<br><br>
+                
+                <strong>For File Recipients:</strong><br>
+                • Click the shared link or paste it here<br>
+                • View file info and expiry time<br>
+                • Download the file before it expires<br>
+                • Files are automatically deleted after 24 hours
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFileUuid = '';
+        let countdownInterval;
+
+        function extractUuid(input) {
+            // If it's a full URL, extract UUID from it
+            if (input.includes('/download/')) {
+                return input.split('/download/')[1];
+            }
+            // If it's just the UUID
+            return input.trim();
+        }
+
+        async function loadFileInfo() {
+            const input = document.getElementById('fileInput').value.trim();
+            if (!input) {
+                showError('Please enter a file UUID or download link');
+                return;
+            }
+
+            currentFileUuid = extractUuid(input);
+            
+            document.getElementById('loadingDiv').style.display = 'block';
+            document.getElementById('fileInfoDiv').style.display = 'none';
+            document.getElementById('errorDiv').style.display = 'none';
+
+            try {
+                const response = await fetch(`http://localhost:3000/api/files/info/${currentFileUuid}`);
+                const result = await response.json();
+
+                document.getElementById('loadingDiv').style.display = 'none';
+
+                if (result.success) {
+                    displayFileInfo(result.data);
+                } else {
+                    showError(result.error || 'File not found');
+                }
+            } catch (error) {
+                document.getElementById('loadingDiv').style.display = 'none';
+                showError('Failed to load file info: ' + error.message);
+            }
+        }
+
+        function displayFileInfo(fileData) {
+            document.getElementById('fileDetails').innerHTML = `
+                <strong>📄 File Name:</strong> ${fileData.originalName}<br>
+                <strong>📊 File Size:</strong> ${(fileData.fileSize / 1024).toFixed(1)} KB<br>
+                <strong>📅 Uploaded:</strong> ${new Date(fileData.uploadTime).toLocaleString()}<br>
+                <strong>📥 Downloads:</strong> ${fileData.downloadCount}
+            `;
+
+            document.getElementById('expiryTime').textContent = new Date(fileData.expiryTime).toLocaleString();
+            document.getElementById('downloadCount').textContent = fileData.downloadCount;
+
+            if (fileData.isExpired) {
+                document.getElementById('expiryWarning').innerHTML = `
+                    <strong>❌ This file has expired!</strong><br>
+                    Expired on: ${new Date(fileData.expiryTime).toLocaleString()}
+                `;
+                document.getElementById('expiryWarning').style.background = '#f8d7da';
+                document.getElementById('expiryWarning').style.color = '#721c24';
+                document.getElementById('downloadBtn').disabled = true;
+                document.getElementById('downloadBtn').textContent = '❌ File Expired';
+                document.getElementById('downloadBtn').style.background = '#dc3545';
+            } else {
+                startCountdown(fileData.timeRemaining);
+                document.getElementById('downloadBtn').disabled = false;
+                document.getElementById('downloadBtn').textContent = '📥 Download File';
+                document.getElementById('downloadBtn').style.background = 'linear-gradient(45deg, #28a745, #20c997)';
+            }
+
+            document.getElementById('fileInfoDiv').style.display = 'block';
+        }
+
+        function startCountdown(timeRemaining) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                timeRemaining -= 1000;
+                
+                if (timeRemaining <= 0) {
+                    document.getElementById('countdown').textContent = 'EXPIRED';
+                    document.getElementById('downloadBtn').disabled = true;
+                    document.getElementById('downloadBtn').textContent = '❌ File Expired';
+                    clearInterval(countdownInterval);
+                    return;
+                }
+                
+                const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+                
+                document.getElementById('countdown').textContent = `${hours}h ${minutes}m ${seconds}s`;
+            }, 1000);
+        }
+
+        async function downloadFile() {
+            if (!currentFileUuid) {
+                showError('No file selected');
+                return;
+            }
+
+            try {
+                // Open download link in new tab
+                window.open(`http://localhost:3000/api/files/download/${currentFileUuid}`, '_blank');
+                
+                showSuccess('Download started! The file should download automatically.');
+                
+                // Refresh file info to update download count
+                setTimeout(() => {
+                    loadFileInfo();
+                }, 2000);
+                
+            } catch (error) {
+                showError('Download failed: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorDiv').style.display = 'block';
+            document.getElementById('successDiv').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            document.getElementById('successMessage').textContent = message;
+            document.getElementById('successDiv').style.display = 'block';
+            document.getElementById('errorDiv').style.display = 'none';
+        }
+
+        // Auto-load if UUID is in URL hash
+        window.addEventListener('load', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash) {
+                document.getElementById('fileInput').value = hash;
+                loadFileInfo();
+            }
+        });
+    </script>
+</body>
+</html>

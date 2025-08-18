@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeTransfer-like File Sharing Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 1.1em;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 15px;
+            border: 3px dashed #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            background: #f9f9f9;
+            transition: all 0.3s ease;
+        }
+        input[type="file"]:hover {
+            border-color: #007bff;
+            background: #f0f8ff;
+        }
+        input[type="email"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        input[type="email"]:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        .upload-btn {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+        }
+        .info-box {
+            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #2196f3;
+        }
+        .success-box {
+            background: linear-gradient(45deg, #e8f5e8, #c8e6c9);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #4caf50;
+            display: none;
+        }
+        .link-container {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #dee2e6;
+        }
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .share-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        .copy { background: #6c757d; color: white; }
+        .demo-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+        .step {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 WeTransfer Clone</h1>
+        <p class="subtitle">Upload files and share them instantly with unique links!</p>
+        
+        <div class="info-box">
+            <strong>🚀 How it works:</strong><br>
+            1. Choose any file from your computer<br>
+            2. Add email addresses (optional)<br>
+            3. Get a unique shareable link<br>
+            4. Share the link with anyone!<br>
+            5. Files expire in 24 hours automatically
+        </div>
+
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="file">📎 Select File to Share:</label>
+                <input type="file" id="file" name="file" required>
+                <small style="color: #666;">Any file type • Max 100MB • Expires in 24 hours</small>
+            </div>
+
+            <div class="form-group">
+                <label for="senderEmail">📧 Your Email (optional):</label>
+                <input type="email" id="senderEmail" name="senderEmail" placeholder="your-email@example.com">
+            </div>
+
+            <div class="form-group">
+                <label for="receiverEmail">📨 Send to Email (optional):</label>
+                <input type="email" id="receiverEmail" name="receiverEmail" placeholder="friend@example.com">
+                <small style="color: #666;">They'll get an email with the download link</small>
+            </div>
+
+            <button type="submit" class="upload-btn">🚀 Upload & Create Shareable Link</button>
+        </form>
+
+        <div id="successBox" class="success-box">
+            <h3>✅ File Uploaded Successfully!</h3>
+            <div id="fileInfo"></div>
+            <div class="link-container">
+                <strong>🔗 Shareable Download Link:</strong><br>
+                <input type="text" id="downloadLink" readonly style="width: 70%; padding: 8px; margin: 5px 0;">
+                <button class="copy-btn" onclick="copyLink()">📋 Copy</button>
+            </div>
+            
+            <div class="share-buttons">
+                <button class="share-btn copy" onclick="copyLink()">📋 Copy Link</button>
+            </div>
+            
+            <div style="margin-top: 15px; padding: 10px; background: #fff3cd; border-radius: 5px;">
+                <strong>⏰ Important:</strong> This link will expire on <span id="expiryTime"></span>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        let currentDownloadLink = '';
+        let currentFileName = '';
+
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('file');
+            const senderEmail = document.getElementById('senderEmail').value;
+            const receiverEmail = document.getElementById('receiverEmail').value;
+            
+            if (!fileInput.files[0]) {
+                alert('Please select a file!');
+                return;
+            }
+            
+            formData.append('file', fileInput.files[0]);
+            if (senderEmail) formData.append('senderEmail', senderEmail);
+            if (receiverEmail) formData.append('receiverEmail', receiverEmail);
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/files/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentDownloadLink = result.data.downloadLink;
+                    currentFileName = result.data.filename;
+                    
+                    document.getElementById('fileInfo').innerHTML = `
+                        <strong>📄 File:</strong> ${result.data.filename}<br>
+                        <strong>📊 Size:</strong> ${(result.data.fileSize / 1024).toFixed(1)} KB<br>
+                        <strong>📧 Email sent:</strong> ${result.data.emailSent ? 'Yes ✅' : 'No ❌'}
+                    `;
+                    
+                    document.getElementById('downloadLink').value = currentDownloadLink;
+                    document.getElementById('expiryTime').textContent = new Date(result.data.expiryTime).toLocaleString();
+                    document.getElementById('successBox').style.display = 'block';
+                    
+                    // Scroll to success box
+                    document.getElementById('successBox').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Upload failed: ' + result.error);
+                }
+            } catch (error) {
+                alert('Upload failed: ' + error.message);
+            }
+        });
+        
+        function copyLink() {
+            const linkInput = document.getElementById('downloadLink');
+            linkInput.select();
+            document.execCommand('copy');
+            alert('📋 Link copied to clipboard!');
+        }
+        
+
+    </script>
+</body>
+</html>
